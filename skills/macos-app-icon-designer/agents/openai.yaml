@@ -1,0 +1,4 @@
+interface:
+  display_name: "macOS App Icon Designer"
+  short_description: "Design, validate, and package native macOS app icons"
+  default_prompt: "Use $macos-app-icon-designer to design and package a production-ready macOS app icon."
