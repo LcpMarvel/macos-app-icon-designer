@@ -46,7 +46,9 @@ def alpha_at(source: Path, x: int, y: int) -> float:
     return float(value)
 
 
-def validate_flattened_artwork(source: Path, width: int, allow_full_bleed: bool) -> None:
+def validate_flattened_artwork(
+    source: Path, width: int, allow_full_bleed: bool, allow_small_artwork: bool
+) -> None:
     if shutil.which("magick") is None:
         print("Warning: ImageMagick is unavailable; corner and boundary checks were skipped.", file=sys.stderr)
         return
@@ -74,6 +76,20 @@ def validate_flattened_artwork(source: Path, width: int, allow_full_bleed: bool)
             + "). Add transparent outer padding or pass --allow-full-bleed when intentional."
         )
 
+    solid_bbox = run(
+        "magick", str(source), "-alpha", "extract", "-threshold", "50%", "-format", "%@", "info:", capture=True
+    ).strip()
+    solid_match = re.fullmatch(r"(\d+)x(\d+)\+(-?\d+)\+(-?\d+)", solid_bbox)
+    if not solid_match:
+        raise ValueError("artwork has no substantially opaque pixels")
+    solid_w, solid_h = map(int, solid_match.groups()[:2])
+    if min(solid_w, solid_h) < width * 0.85 and not allow_small_artwork:
+        raise ValueError(
+            f"flattened artwork appears undersized at {solid_w}x{solid_h} within {width}x{width}; "
+            "the 85% check is a review heuristic, not an Apple safe-zone rule. Compare it beside "
+            "neighboring icons at Dock size, then enlarge it or pass --allow-small-artwork if intentional."
+        )
+
 
 def compile_icns(iconset: Path, icns: Path) -> None:
     if shutil.which("iconutil") is None:
@@ -93,6 +109,7 @@ def main() -> int:
     parser.add_argument("--preserve-existing", action="store_true", help="Keep existing canonical PNG variants")
     parser.add_argument("--compile-only", action="store_true", help="Compile the existing iconset without resizing")
     parser.add_argument("--allow-full-bleed", action="store_true", help="Allow opaque corners or edge-touching artwork")
+    parser.add_argument("--allow-small-artwork", action="store_true", help="Allow deliberately small optical bounds after Dock-size review")
     args = parser.parse_args()
 
     try:
@@ -111,7 +128,7 @@ def main() -> int:
             width, height = dimensions(args.source)
             if width != height or width < 1024:
                 raise ValueError(f"source must be square and at least 1024px; got {width}x{height}")
-            validate_flattened_artwork(args.source, width, args.allow_full_bleed)
+            validate_flattened_artwork(args.source, width, args.allow_full_bleed, args.allow_small_artwork)
             args.output.mkdir(parents=True, exist_ok=True)
             for name, size in FILES.items():
                 destination = args.output / name

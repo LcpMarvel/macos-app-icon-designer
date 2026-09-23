@@ -25,7 +25,7 @@ class BuildIconsetTests(unittest.TestCase):
         if rounded:
             subprocess.run([
                 "magick", "-size", "1024x1024", "xc:none", "-fill", "#258fbe",
-                "-draw", "roundrectangle 82,82 941,941 185,185", str(path),
+                "-draw", "roundrectangle 65,65 958,958 185,185", str(path),
             ], check=True)
         else:
             subprocess.run(["magick", "-size", "1024x1024", "xc:#258fbe", str(path)], check=True)
@@ -48,6 +48,18 @@ class BuildIconsetTests(unittest.TestCase):
         ], check=True)
         self.assertEqual(len(list(iconset.glob("*.png"))), 10)
         self.assertGreater(icns.stat().st_size, 0)
+
+    def test_rejects_undersized_artwork_unless_reviewed(self) -> None:
+        source = self.root / "small.png"
+        subprocess.run([
+            "magick", "-size", "1024x1024", "xc:none", "-fill", "#258fbe",
+            "-draw", "roundrectangle 120,120 903,903 185,185", str(source),
+        ], check=True)
+        command = ["python3", str(SCRIPT), str(source), "--output", str(self.root / "small.iconset")]
+        result = subprocess.run(command, text=True, capture_output=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("undersized", result.stderr)
+        subprocess.run(command + ["--allow-small-artwork"], check=True)
 
     def test_preserves_existing_variant(self) -> None:
         iconset = self.root / "AppIcon.iconset"

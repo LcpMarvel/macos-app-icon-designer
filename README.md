@@ -10,9 +10,9 @@ It helps Codex, Claude Code, Cursor, and other compatible coding agents treat an
 - Apple Icon Composer and Liquid Glass workflows
 - Xcode AppIcon asset catalogs
 - Legacy `.iconset` and `.icns` packaging
-- Transparent-corner and full-bleed validation
+- Transparent-corner, full-bleed, and excess-padding validation
 - Small-size legibility checks from 256 px down to 16 px
-- Finder, Dock, and multi-background preview sheets
+- Finder/Dock neighbor comparison and multi-background preview sheets
 - Tauri, Electron, and plain macOS app bundle integration
 - Dedicated monochrome menu bar and status item template images
 
@@ -85,13 +85,14 @@ python3 skills/macos-app-icon-designer/scripts/build_iconset.py \
   --icns path/to/AppIcon.icns
 ```
 
-The helper rejects non-square or undersized sources. When ImageMagick is available, it also rejects opaque corners and unintended full-bleed artwork.
+The helper rejects non-square or undersized sources. When ImageMagick is available, it also rejects opaque corners, unintended full-bleed artwork, and artwork whose substantially opaque bounds fill less than 85% of either axis. The last check is a review heuristic, not an Apple safe-zone rule; inspect the packaged icon beside its Dock neighbors.
 
 Useful options:
 
 - `--preserve-existing`: keep hand-tuned small-size variants
 - `--compile-only`: compile an existing iconset without regenerating images
 - `--allow-full-bleed`: explicitly allow an intentional square silhouette
+- `--allow-small-artwork`: explicitly allow a compact silhouette after Dock-size comparison
 
 ### Render a visual QA sheet
 
@@ -101,7 +102,7 @@ python3 skills/macos-app-icon-designer/scripts/render_preview_sheet.py \
   --output path/to/icon-preview.png
 ```
 
-The preview sheet shows the icon at 256, 128, 64, 32, and 16 px on light, dark, neutral, and wallpaper-like backgrounds.
+The preview sheet shows the icon at 256, 128, 64, 32, and 16 px on light, dark, neutral, and wallpaper-like backgrounds. It does not replace the required neighbor comparison and packaged Finder/Dock inspection.
 
 ## Repository structure
 

@@ -21,7 +21,7 @@ Consult these sources when exact current requirements affect the deliverable. Ap
 
 ## Legacy flattened iconset
 
-Treat a flattened icon as finished artwork. Unlike Icon Composer source layers, a legacy `.icns` must carry its own silhouette. Use transparent canvas corners and deliberate optical padding for a rounded icon; do not submit a full-bleed square and expect Finder or Dock to mask it. Avoid baking an additional dark rounded tile inside the silhouette, which produces a double-border effect.
+Treat a flattened icon as finished artwork. Unlike Icon Composer source layers, a legacy `.icns` must carry its own silhouette. Use transparent canvas corners and deliberate optical padding for a rounded icon; do not submit a full-bleed square and expect Finder or Dock to mask it. Keep one visible tile rather than a small tile nested inside transparent padding that may reveal a neutral system backplate. The proper padding is determined by the actual Dock comparison, not a fixed percentage in an image prompt.
 
 Canonical files generated from a 1024px master:
 
@@ -65,9 +65,11 @@ Treat the menu bar icon as a separate asset family, not a reduced App Icon. A Do
 - Confirm an alpha channel exists when the intended silhouette is not square.
 - Confirm all four canvas corners are transparent.
 - Confirm visible artwork does not touch the canvas boundary unintentionally.
-- Compare the optical size with neighboring system and third-party icons; geometric canvas equality does not guarantee equal perceived size.
+- Measure the substantially opaque bounds, not just the faintest alpha pixel; antialiasing and stray generated pixels can make an undersized tile appear to fill the canvas numerically.
+- Compare both tile and foreground optical size beside at least three neighboring system and third-party icons at the same Dock point size; geometric canvas equality does not guarantee equal perceived size.
+- Reject a visible inner card, neutral backplate, or subject that shrinks into the tile. Rework the source and repeat the comparison after packaging.
 - Preview against light, dark, neutral, and textured backgrounds at 256, 128, 64, 32, and 16 px.
-- Inspect the packaged application, not only the source PNG or `.icns`.
+- Inspect the packaged application in Finder and Dock, not only the source PNG or `.icns`. Account for caches before diagnosing a mismatch.
 
 ## Review rubric
 
@@ -77,6 +79,7 @@ Reject or revise when any of these fail:
 - Distinction: the icon is easily confused with a common system or competitor icon.
 - Silhouette: the primary shape disappears at 32px.
 - Hierarchy: more than one element competes as the focal point.
+- Scale: the tile or main subject appears materially smaller than its Dock neighbors, or a second plate makes the icon look nested.
 - Mask resilience: critical content touches or depends on rounded corners.
 - Effects: baked highlights/shadows fight system-rendered effects.
 - Contrast: foreground separates poorly in any supported appearance.
